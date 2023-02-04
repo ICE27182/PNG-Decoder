@@ -240,7 +240,7 @@ Parameter Error
             print(string)
     
 
-    def to_hex(self, output_rela=None,output_abs=None,decompress=True,orgin=False):
+    def to_hex(self, output_rela=None,output_abs=None,decompress=True,origin=False):
         """Display the Hex code of the picture"""
         def bytes_to_hex(bytes,):
             """Turn a series of bytes in to a string containing Hex codes grouped by 2 
@@ -418,7 +418,7 @@ bytes[8+chunk_len:12+chunk_len])}
         str = iend(line_num)
         string += str
 
-        if orgin == True:
+        if origin == True:
             string += "\n\n\n" + self.bytes
 
         # Output the result,
