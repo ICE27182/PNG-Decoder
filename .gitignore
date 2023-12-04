@@ -1,0 +1,5 @@
+*.pickle
+*test*
+pics
+__pycache__
+1.0
