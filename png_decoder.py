@@ -22,7 +22,7 @@ except ImportError:
           "capability to do Cyclic Redundancy Check")
 # IDAT includes Huffman and LZSS, so decompress is called to do the
 # job.
-from zlib import decompress
+from zlib import decompress, compress
 # Will be needed in Png.get_all_idat_data
 from math import ceil
 
@@ -501,8 +501,47 @@ class Png:
                 except:
                     print(f"\033[41mXX\033[0m", end="")
             print("\033[0m")
-            
- 
+
+
+
+    def encode(pixels) -> bytes:
+        """
+        Warning!!! It is a extremely basic encoder, in which only None filter will be used.
+        Input; self.pixels or anything in the same format
+        Output: RGB 24-bit
+        """
+        width = len(pixels[0])
+        height = len(pixels)
+        header = b'\x89PNG\r\n\x1a\n'
+        IHDR_chunk = (b'\x00\x00\x00\rIHDR' + 
+                      width.to_bytes(4) + 
+                      height.to_bytes(4) + 
+                      b'\x08\x02\x00\x00\x00')
+        IHDR_chunk += crc32(IHDR_chunk[8:]).to_bytes(4)
+        IDAT_data = []
+        IDAT_chunk = (((1 + width * 3) * height).to_bytes(4) +
+                      b'IDAT')
+        for row in pixels:
+            IDAT_data.append(b'\x00')
+            for pixel in row:
+                IDAT_data.append(pixel[0].to_bytes(1))
+                IDAT_data.append(pixel[1].to_bytes(1))
+                IDAT_data.append(pixel[2].to_bytes(1))
+        IDAT_data = b''.join(IDAT_data)
+        IDAT_chunk += compress(IDAT_data)
+        IDAT_chunk += crc32(IDAT_chunk[8:]).to_bytes(4)
+        IEND_chunk = b'\x00\x00\x00\x00IEND.B`.'
+        return header + IHDR_chunk + IDAT_chunk + IEND_chunk
+    
+    def write_image(img, path="image.png"):
+        if not path.endswith(".png"):
+            path += ".png"
+        if isinstance(img, Png):
+            img = img.pixels
+        with open(path, "wb") as image_file:
+            image_file.write(Png.encode(img))
+        
+
     
 def bytes_to_hex(bytes:bytes, start:int=0) -> str:
     """Take bytes type and return a string of hex in upper case, separated with space by 2 digits"""
@@ -569,7 +608,15 @@ if __name__ == "__main__":
     # img = Png("palette_pirot", from_pickle=False, to_pickle=False, crc=True)
     # img.display()
     img = Png("desktop", from_pickle=True, to_pickle=True, crc=False)
+    img.display()
+    for y in range(img.height):
+        for x in range(img.width):
+            img.pixels[y][x][0] %= 128
+            img.pixels[y][x][1] %= 128
+            img.pixels[y][x][2] %= 128
     
-    print(img)
+    img.display()
+    img.write_image()
+    img = Png("image.png", "./")
     img.display()
     
